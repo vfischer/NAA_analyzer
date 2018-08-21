@@ -74,7 +74,7 @@ if __name__=="__main__":
             efficiency_list = efficiency_HPGe50pct_10cm
     if hpge_type == "99": 
         if geometry == "Face":
-            efficiency_list = efficiency_HPGe90pct_face
+            efficiency_list = efficiency_HPGe99pct_face
         if geometry == "10cm":
             efficiency_list = efficiency_HPGe99pct_10cm
     
@@ -89,6 +89,6 @@ if __name__=="__main__":
     # The desired efficiency value        
     final_efficiency = interpolate(energy_interest, En_low, En_high, Eff_low, Eff_high)   
     
-    print "Efficiency of the %s HPGe (%s geometry) at %.3f keV is %.3f percents)" % (hpge_type, geometry, energy_interest, final_efficiency)
+    print "Efficiency of the %s HPGe (%s geometry) at %.3f keV is %.3f percents" % (hpge_type, geometry, energy_interest, final_efficiency)
     
 ############ END ################    

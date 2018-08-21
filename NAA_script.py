@@ -14,29 +14,29 @@ import optparse
 N_Avogadro = 6.022140e23 # Avogadro constant
 
 # Reactor infos
-n_flux = 2.1e11 # Thermal neutron flux in n.cm^-2.s^-1 # Value till 13-02-18 was 1.73e11 (aluminium holder)
+n_flux = 2e11 # Thermal neutron flux in n.cm^-2.s^-1 # Value till 13-02-18 was 1.73e11 (aluminium holder), 2.1e11 now
 n_flux_err = 2.1e10 # Error on thermal neutron flux in n.cm^-2.s^-1
 
 # Sample infos
-sample_size = 500e-6 # sample size in liters (works for a solution only)
-sample_density = 1 # sample density (1 for water, 0.8 for DDA, 0.9 for LAB)
+sample_size = 20e-3 # sample size in liters (works for a solution only)
+sample_density = 0.8 # sample density (1 for water, 0.8 for DDA, 0.9 for LAB)
 
 # Time infos
-t_irrad = 4*3600 # Irradiation time in seconds
-t_cooling = 248880 # Cooling time in seconds
-t_counting = 216000 # Counting time in seconds, should be the total time since the livetime is used to correct the peak integral
+t_irrad = 3600 # Irradiation time in seconds
+t_cooling = 48*3600 # Cooling time in seconds
+t_counting = 3*24*3600 # Counting time in seconds, should be the total time since the livetime is used to correct the peak integral
 
 # HPGe infos
-Epsilon_c = 0.01*3.32 # Efficiency of the germanium at this energy in percents norm. to 1
+Epsilon_c = 0.01*0.12 # Efficiency of the germanium at this energy in percents norm. to 1
 
 # User-defined element infos
-sigma_ng_b_user = 74 # Neutron capture cross section (n,g) in barns
+sigma_ng_b_user = 15.4 # Neutron capture cross section (n,g) in barns
 #sigma_ng = sigma_ng_b * 1e-24 # Neutron capture cross section (n,g) in cm^-2
-I_gamma_user = 0.999 # Intensity (branching ratio) of the gamma line in percents norm. to 1
-element_half_life_user = 1925.28*24*3600 # Half-life in seconds
+I_gamma_user = 0.0991 # Intensity (branching ratio) of the gamma line in percents norm. to 1
+element_half_life_user = 27.7*24*3600 # Half-life in seconds
 #element_lambda = math.log(2)/element_half_life # lambda in s^-1
-molar_mass_user = 58.93 # molar mass in grams per mol
-abundance_user = 1 # abundance of the isotope of interest in percents norm. to 1
+molar_mass_user = 52 # molar mass in grams per mol
+abundance_user = 0.0435 # abundance of the isotope of interest in percents norm. to 1
 
 
 # ============================================================================================================================================================================ #
@@ -106,7 +106,7 @@ def load_isotope(isotope_name):
 def get_concentration(peak_integral,peak_integral_err):
     nb_atom_start_count = peak_integral/(Epsilon_c*I_gamma*(1-math.exp(-element_lambda*t_counting)))
     nb_atom_start_cooling = nb_atom_start_count*math.exp(element_lambda*t_cooling)
-    nb_atom_start_irrad = nb_atom_start_cooling/(sigma_ng*n_flux*t_irrad)
+    nb_atom_start_irrad = nb_atom_start_cooling*element_lambda/(sigma_ng*n_flux*(1-math.exp(-element_lambda*t_irrad)))
     nb_mol_sample = nb_atom_start_irrad/N_Avogadro
     nb_g_sample = nb_mol_sample*molar_mass
     concentration_perL = nb_g_sample/sample_size
@@ -146,7 +146,7 @@ def get_peak_integral(concentration,concentration_err):
     nb_g_sample = concentration*sample_size
     nb_mol_sample = nb_g_sample/molar_mass
     nb_atom_start_irrad = nb_mol_sample*N_Avogadro
-    nb_atom_start_cooling = nb_atom_start_irrad*(sigma_ng*n_flux*t_irrad)
+    nb_atom_start_cooling = nb_atom_start_irrad*(sigma_ng*n_flux)/(element_lambda/(1-math.exp(-element_lambda*t_irrad)))
     nb_atom_start_count = nb_atom_start_cooling/math.exp(element_lambda*t_cooling)
     peak_integral = nb_atom_start_count*(Epsilon_c*I_gamma*(1-math.exp(-element_lambda*t_counting)))
 
@@ -175,7 +175,7 @@ def get_neutron_flux(concentration, peak_integral,concentration_err,peak_integra
     nb_atom_start_irrad = nb_mol_sample*N_Avogadro
     nb_atom_start_count = peak_integral/(Epsilon_c*I_gamma*(1-math.exp(-element_lambda*t_counting)))
     nb_atom_start_cooling = nb_atom_start_count*math.exp(element_lambda*t_cooling)
-    n_flux = nb_atom_start_cooling/(sigma_ng*t_irrad*nb_atom_start_irrad)
+    n_flux = nb_atom_start_cooling*element_lambda/(sigma_ng*nb_atom_start_irrad*(1-math.exp(-element_lambda*t_irrad)))
 
     if concentration_err != 0 or peak_integral_err != 0:
         n_flux_max = ((peak_integral+peak_integral_err)/(Epsilon_c*I_gamma*(1-math.exp(-element_lambda*t_counting)))*math.exp(element_lambda*t_cooling))\
